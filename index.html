@@ -1,0 +1,79 @@
+<style>
+  div {
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    position: absolute; /* To allow positioning the squares */
+    background-color: orange; /* Set squares to orange */
+  }
+
+  .background {
+    position: absolute;
+    background-color: white; /* Change background to white */
+    width: 100vw; /* Ensures the background covers the entire viewport width */
+    height: 100vh;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    overflow: hidden; /* Ensures the elements don't overflow outside */
+  }
+</style>
+
+<body>
+  <section class="background"></section>
+
+  <script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library/build/nn.min.js"></script>
+  <script>
+    /* global nn */
+
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    let pixelCounter = 0;
+    let maxPixels = (screenWidth / 40) * (screenHeight / 40); // Max number of pixels based on screen size
+
+    function newPixel() {
+      if (pixelCounter >= maxPixels) {
+        resetAnimation(); // Reset the animation when max pixels are reached
+      } else {
+        const div = nn.create('div');
+        // Randomly position the square
+        const posX = Math.random() * (screenWidth - 40); // Ensure it stays within the screen
+        const posY = Math.random() * (screenHeight - 40);
+        div.style.left = posX + 'px';
+        div.style.top = posY + 'px';
+        div.style.transition = 'left 1s linear, top 1s linear'; // Transition effect for movement
+
+        // Animate moving the square across the screen
+        setTimeout(() => {
+          const newPosX = Math.random() * (screenWidth - 40);
+          const newPosY = Math.random() * (screenHeight - 40);
+          div.style.left = newPosX + 'px';
+          div.style.top = newPosY + 'px';
+        }, 0); // Start moving immediately
+
+        div.addTo('.background');
+        pixelCounter++;
+      }
+    }
+
+    function resetAnimation() {
+      const background = nn.get('.background');
+      background.innerHTML = ''; // Clear all blocks
+      pixelCounter = 0; // Reset the pixel counter
+      animation(); // Restart the animation
+    }
+
+    function animation() {
+      newPixel();
+      setTimeout(animation, 1000); // Loop the animation with a delay
+    }
+
+    nn.on('load', animation);
+  </script>
+</body>
+
+
+
+
+
+
