@@ -1,76 +1,175 @@
-<style>
-  div {
-    width: 40px;
-    height: 40px;
-    display: inline-block;
-    position: absolute; /* To allow positioning the squares */
-    background-color: orange; /* Set squares to orange */
-  }
-
-  .background {
-    position: absolute;
-    background-color: white; /* Change background to white */
-    width: 100vw; /* Ensures the background covers the entire viewport width */
-    height: 100vh;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    overflow: hidden; /* Ensures the elements don't overflow outside */
-  }
-</style>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Art: Water Lilies</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #B0E0E6; /* Change background color to lighter blue */
+    }
+    canvas {
+      image-rendering: pixelated; /* Ensures pixelation effect */
+      display: block;
+      background-color: 	#74CDD0 ; /* Set canvas background color to lighter blue */
+    }
+  </style>
+</head>
 <body>
-  <section class="background"></section>
 
-  <script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library/build/nn.min.js"></script>
+  <canvas id="pixelCanvas"></canvas>
+
   <script>
-    /* global nn */
+    const canvas = document.getElementById('pixelCanvas');
+    const ctx = canvas.getContext('2d');
 
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    let pixelCounter = 0;
-    let maxPixels = (screenWidth / 40) * (screenHeight / 40); // Max number of pixels based on screen size
+    // Set canvas to full screen
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
 
-    function newPixel() {
-      if (pixelCounter >= maxPixels) {
-        resetAnimation(); // Reset the animation when max pixels are reached
-      } else {
-        const div = nn.create('div');
-        // Randomly position the square
-        const posX = Math.random() * (screenWidth - 40); // Ensure it stays within the screen
-        const posY = Math.random() * (screenHeight - 40);
-        div.style.left = posX + 'px';
-        div.style.top = posY + 'px';
-        div.style.transition = 'left 1s linear, top 1s linear'; // Transition effect for movement
+    const pixelSize = 10; // Size of each "pixel"
+    const gridWidth = Math.floor(canvas.width / pixelSize);
+    const gridHeight = Math.floor(canvas.height / pixelSize);
 
-        // Animate moving the square across the screen
-        setTimeout(() => {
-          const newPosX = Math.random() * (screenWidth - 40);
-          const newPosY = Math.random() * (screenHeight - 40);
-          div.style.left = newPosX + 'px';
-          div.style.top = newPosY + 'px';
-        }, 0); // Start moving immediately
+    const lilyPads = []; // Array to hold lily pad data
 
-        div.addTo('.background');
-        pixelCounter++;
+    // Function to draw a pixel (fillRect with color)
+    function drawPixel(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+    }
+
+    // Function to generate random water colors for a lighter pixelated effect
+    function generateWaterTexture() {
+      const waterColors = ['#B0E0E6', '#AFEEEE', '#ADD8E6', '#E0FFFF', '#87CEFA', '#00CED1', '#5F9EA0'];
+      for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+          if (Math.random() > 0.6) { // Randomly decide whether to draw a pixel
+            const colorIndex = Math.floor(Math.random() * waterColors.length);
+            drawPixel(x, y, waterColors[colorIndex]);
+          }
+        }
       }
     }
 
-    function resetAnimation() {
-      const background = nn.get('.background');
-      background.innerHTML = ''; // Clear all blocks
-      pixelCounter = 0; // Reset the pixel counter
-      animation(); // Restart the animation
+    // Function to create lily pads at random positions with reduced green surface
+    function createLilyPads(numPads) {
+      for (let i = 0; i < numPads; i++) {
+        const radius = Math.floor(Math.random() * 2) + 2; // Smaller size for lily pads
+        const posX = Math.floor(Math.random() * gridWidth);
+        const posY = Math.floor(Math.random() * gridHeight);
+        const speedX = (Math.random() * 0.2) - 0.1; // Slightly faster movement in both X and Y
+        const speedY = (Math.random() * 0.2) - 0.1; 
+        lilyPads.push({ posX, posY, radius, speedX, speedY });
+      }
     }
 
-    function animation() {
-      newPixel();
-      setTimeout(animation, 1000); // Loop the animation with a delay
+    // Function to add texture to the lily pads (more green variety)
+    function getLilyPadColor() {
+      const greenShades = ['#228B22', '#2E8B57', '#006400', '#32CD32', '#3CB371'];
+      return greenShades[Math.floor(Math.random() * greenShades.length)];
     }
 
-    nn.on('load', animation);
+    // Draw a smaller lily pad (reduced green surface area)
+    function drawLilyPad(centerX, centerY, radius) {
+      for (let y = -radius; y <= radius; y++) {
+        for (let x = -radius; x <= radius; x++) {
+          if (x * x + y * y <= radius * radius && Math.random() > 0.4) { // Reducing green surface area
+            drawPixel(centerX + x, centerY + y, getLilyPadColor()); // Textured green colors
+          }
+        }
+      }
+    }
+
+    // Function to randomly choose between light pink or white for water lily flowers
+    function getFlowerColor() {
+      return Math.random() > 0.5 ? '#FFC0CB' : '#FFFFFF'; // Light pink or white
+    }
+
+    // Draw water lily flower (small light pink/white pixels)
+    function drawWaterLily(centerX, centerY) {
+      const flowerColor = getFlowerColor(); // Lighter color for flowers
+      drawPixel(centerX, centerY, '#FFD700'); // Yellow center
+      drawPixel(centerX - 1, centerY, flowerColor);
+      drawPixel(centerX + 1, centerY, flowerColor);
+      drawPixel(centerX, centerY - 1, flowerColor);
+      drawPixel(centerX, centerY + 1, flowerColor);
+    }
+
+    // Animate water lilies to move randomly without intersecting each other
+    function moveLilyPads() {
+      for (let i = 0; i < lilyPads.length; i++) {
+        let lilyPad = lilyPads[i];
+
+        // Update the position with random motion
+        lilyPad.posX += lilyPad.speedX;
+        lilyPad.posY += lilyPad.speedY;
+
+        // Keep the lily pads within screen boundaries
+        if (lilyPad.posX < 0 || lilyPad.posX >= gridWidth) lilyPad.speedX *= -1;
+        if (lilyPad.posY < 0 || lilyPad.posY >= gridHeight) lilyPad.speedY *= -1;
+
+        // Check for intersection with other lily pads
+        for (let j = 0; j < lilyPads.length; j++) {
+          if (i !== j) {
+            const otherPad = lilyPads[j];
+            const distX = lilyPad.posX - otherPad.posX;
+            const distY = lilyPad.posY - otherPad.posY;
+            const distance = Math.sqrt(distX * distX + distY * distY);
+            if (distance < lilyPad.radius + otherPad.radius) {
+              lilyPad.speedX *= -1; // Reverse direction to avoid intersection
+              lilyPad.speedY *= -1;
+            }
+          }
+        }
+
+        // Draw the lily pad and the flower
+        drawLilyPad(Math.floor(lilyPad.posX), lilyPad.posY, lilyPad.radius);
+        drawWaterLily(Math.floor(lilyPad.posX), lilyPad.posY);
+      }
+    }
+
+    // Main animation function
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+      generateWaterTexture(); // Draw dynamic pixelated water texture
+      moveLilyPads(); // Move lily pads and draw them
+      setTimeout(animate, 100); // Slow down the water animation
+    }
+
+    // Initialize the scene
+    createLilyPads(30); // Create 30 lily pads
+    animate(); // Start animation loop
+
+    // Adjust canvas size on window resize
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
   </script>
+
 </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
